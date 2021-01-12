@@ -27,7 +27,6 @@ var invalidSelectors = [
   {name: "Invalid class",                selector: ".foo..quux"},
   {name: "Invalid class",                selector: ".bar."},
   {name: "Invalid combinator",           selector: "div & address, p"},
-  {name: "Invalid combinator",           selector: "div >> address, p"},
   {name: "Invalid combinator",           selector: "div ++ address, p"},
   {name: "Invalid combinator",           selector: "div ~~ address, p"},
   {name: "Invalid [att=value] selector", selector: "[*=test]"},
@@ -35,13 +34,16 @@ var invalidSelectors = [
   {name: "Invalid [att=value] selector", selector: "[class= space unquoted ]"},
   {name: "Unknown pseudo-class",         selector: "div:example"},
   {name: "Unknown pseudo-class",         selector: ":example"},
+  {name: "Unknown pseudo-class",         selector: "div:linkexample"},
   {name: "Unknown pseudo-element",       selector: "div::example"},
   {name: "Unknown pseudo-element",       selector: "::example"},
   {name: "Invalid pseudo-element",       selector: ":::before"},
+  {name: "Invalid pseudo-element",       selector: ":: before"},
   {name: "Undeclared namespace",         selector: "ns|div"},
   {name: "Undeclared namespace",         selector: ":not(ns|div)"},
   {name: "Invalid namespace",            selector: "^|div"},
-  {name: "Invalid namespace",            selector: "$|div"}
+  {name: "Invalid namespace",            selector: "$|div"},
+  {name: "Relative selector",            selector: ">*"},
 ];
 
 /*
@@ -68,7 +70,7 @@ var validSelectors = [
   {name: "Type selector, matching body element", selector: "body", expect: [] /*no matches*/, exclude: ["document"],                        level: 1, testType: TEST_QSA},
 
   // Universal Selector
-  // Testing "*" for entire an entire context node is handled separately.
+  {name: "Universal selector, matching all elements",                                    selector: "*",              expect: ["universal", "universal-p1", "universal-code1", "universal-hr1", "universal-pre1", "universal-span1", "universal-p2", "universal-a1", "universal-address1", "universal-code2", "universal-a2"], level: 2, testType: TEST_MATCH},
   {name: "Universal selector, matching all children of element with specified ID",       selector: "#universal>*",   expect: ["universal-p1", "universal-hr1", "universal-pre1", "universal-p2", "universal-address1"], level: 2, testType: TEST_QSA | TEST_MATCH},
   {name: "Universal selector, matching all grandchildren of element with specified ID",  selector: "#universal>*>*", expect: ["universal-code1", "universal-span1", "universal-a1", "universal-code2"],                 level: 2, testType: TEST_QSA | TEST_MATCH},
   {name: "Universal selector, matching all children of empty element with specified ID", selector: "#empty>*",       expect: [] /*no matches*/,                                                                         level: 2, testType: TEST_QSA},
@@ -76,19 +78,20 @@ var validSelectors = [
 
   // Attribute Selectors
   // - presence                  [att]
-  {name: "Attribute presence selector, matching align attribute with value",                    selector: ".attr-presence-div1[align]",                             expect: ["attr-presence-div1"],                                             level: 2, testType: TEST_QSA | TEST_MATCH},
-  {name: "Attribute presence selector, matching align attribute with empty value",              selector: ".attr-presence-div2[align]",                             expect: ["attr-presence-div2"],                                             level: 2, testType: TEST_QSA | TEST_MATCH},
-  {name: "Attribute presence selector, matching title attribute, case insensitivity",           selector: "#attr-presence [TiTlE]",                                 expect: ["attr-presence-a1", "attr-presence-span1"], exclude: ["xhtml"],    level: 2, testType: TEST_QSA | TEST_MATCH},
-  {name: "Attribute presence selector, not matching title attribute, case sensitivity",         selector: "#attr-presence [TiTlE]",                                 expect: [],                                          exclude: ["html"],     level: 2, testType: TEST_QSA | TEST_MATCH},
-  {name: "Attribute presence selector, matching custom data-* attribute",                       selector: "[data-attr-presence]",                                   expect: ["attr-presence-pre1", "attr-presence-blockquote1"],                level: 2, testType: TEST_QSA | TEST_MATCH},
-  {name: "Attribute presence selector, not matching attribute with similar name",               selector: ".attr-presence-div3[align], .attr-presence-div4[align]", expect: [] /*no matches*/,                                                  level: 2, testType: TEST_QSA},
-  {name: "Attribute presence selector, matching attribute with non-ASCII characters",           selector: "ul[data-中文]",                                            expect: ["attr-presence-ul1"],                                              level: 2, testType: TEST_QSA | TEST_MATCH},
-  {name: "Attribute presence selector, not matching default option without selected attribute", selector: "#attr-presence-select1 option[selected]",                expect: [] /* no matches */,                                                level: 2, testType: TEST_QSA},
-  {name: "Attribute presence selector, matching option with selected attribute",                selector: "#attr-presence-select2 option[selected]",                expect: ["attr-presence-select2-option4"],                                  level: 2, testType: TEST_QSA | TEST_MATCH},
-  {name: "Attribute presence selector, matching multiple options with selected attributes",     selector: "#attr-presence-select3 option[selected]",                expect: ["attr-presence-select3-option2", "attr-presence-select3-option3"], level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, matching align attribute with value",                    selector: ".attr-presence-div1[align]",                             expect: ["attr-presence-div1"],                                                                   level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, matching align attribute with empty value",              selector: ".attr-presence-div2[align]",                             expect: ["attr-presence-div2"],                                                                   level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, matching title attribute, case insensitivity",           selector: "#attr-presence [*|TiTlE]",                                 expect: ["attr-presence-a1", "attr-presence-span1", "attr-presence-i1"], exclude: ["xhtml"],    level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, not matching title attribute, case sensitivity",         selector: "#attr-presence [*|TiTlE]",                                 expect: [],                                                              exclude: ["html"],     level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, matching custom data-* attribute",                       selector: "[data-attr-presence]",                                   expect: ["attr-presence-pre1", "attr-presence-blockquote1"],                                      level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, not matching attribute with similar name",               selector: ".attr-presence-div3[align], .attr-presence-div4[align]", expect: [] /*no matches*/,                                                                        level: 2, testType: TEST_QSA},
+  {name: "Attribute presence selector, matching attribute with non-ASCII characters",           selector: "ul[data-中文]",                                            expect: ["attr-presence-ul1"],                                                                    level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, not matching default option without selected attribute", selector: "#attr-presence-select1 option[selected]",                expect: [] /* no matches */,                                                                      level: 2, testType: TEST_QSA},
+  {name: "Attribute presence selector, matching option with selected attribute",                selector: "#attr-presence-select2 option[selected]",                expect: ["attr-presence-select2-option4"],                                                        level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute presence selector, matching multiple options with selected attributes",     selector: "#attr-presence-select3 option[selected]",                expect: ["attr-presence-select3-option2", "attr-presence-select3-option3"],                       level: 2, testType: TEST_QSA | TEST_MATCH},
 
   // - value                     [att=val]
   {name: "Attribute value selector, matching align attribute with value",                                    selector: "#attr-value [align=\"center\"]",                                     expect: ["attr-value-div1"], level: 2, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute value selector, matching align attribute with value, unclosed bracket",                  selector: "#attr-value [align=\"center\"",                                      expect: ["attr-value-div1"], level: 2, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute value selector, matching align attribute with empty value",                              selector: "#attr-value [align=\"\"]",                                           expect: ["attr-value-div2"], level: 2, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute value selector, not matching align attribute with partial value",                        selector: "#attr-value [align=\"c\"]",                                          expect: [] /*no matches*/,   level: 2, testType: TEST_QSA},
   {name: "Attribute value selector, not matching align attribute with incorrect value",                      selector: "#attr-value [align=\"centera\"]",                                    expect: [] /*no matches*/,   level: 2, testType: TEST_QSA},
@@ -120,6 +123,7 @@ var validSelectors = [
   // - substring begins-with     [att^=val] (Level 3)
   {name: "Attribute begins with selector, matching href attributes beginning with specified substring",                             selector: "#attr-begins a[href^=\"http://www\"]", expect: ["attr-begins-a1", "attr-begins-a3"],     level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute begins with selector, matching lang attributes beginning with specified substring, ",                           selector: "#attr-begins [lang^=\"en-\"]",         expect: ["attr-begins-div2", "attr-begins-div4"], level: 3, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute begins with selector, not matching class attribute with empty value",                                           selector: "#attr-begins [class^=\"\"]",          expect: [] /*no matches*/,                        level: 3, testType: TEST_QSA},
   {name: "Attribute begins with selector, not matching class attribute not beginning with specified substring",                     selector: "#attr-begins [class^=apple]",          expect: [] /*no matches*/,                        level: 3, testType: TEST_QSA},
   {name: "Attribute begins with selector with single-quoted value, matching class attribute beginning with specified substring",    selector: "#attr-begins [class^=' apple']",       expect: ["attr-begins-p1"],                       level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute begins with selector with double-quoted value, matching class attribute beginning with specified substring",    selector: "#attr-begins [class^=\" apple\"]",     expect: ["attr-begins-p1"],                       level: 3, testType: TEST_QSA | TEST_MATCH},
@@ -128,6 +132,7 @@ var validSelectors = [
   // - substring ends-with       [att$=val] (Level 3)
   {name: "Attribute ends with selector, matching href attributes ending with specified substring",                             selector: "#attr-ends a[href$=\".org\"]",   expect: ["attr-ends-a1", "attr-ends-a3"],     level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute ends with selector, matching lang attributes ending with specified substring, ",                           selector: "#attr-ends [lang$=\"-CH\"]",     expect: ["attr-ends-div2", "attr-ends-div4"], level: 3, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute ends with selector, not matching class attribute with empty value",                                        selector: "#attr-ends [class$=\"\"]",       expect: [] /*no matches*/,                    level: 3, testType: TEST_QSA},
   {name: "Attribute ends with selector, not matching class attribute not ending with specified substring",                     selector: "#attr-ends [class$=apple]",      expect: [] /*no matches*/,                    level: 3, testType: TEST_QSA},
   {name: "Attribute ends with selector with single-quoted value, matching class attribute ending with specified substring",    selector: "#attr-ends [class$='apple ']",   expect: ["attr-ends-p1"],                     level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute ends with selector with double-quoted value, matching class attribute ending with specified substring",    selector: "#attr-ends [class$=\"apple \"]", expect: ["attr-ends-p1"],                     level: 3, testType: TEST_QSA | TEST_MATCH},
@@ -139,6 +144,7 @@ var validSelectors = [
   {name: "Attribute contains selector, matching href attributes containing specified substring",                              selector: "#attr-contains a[href*=\".example.\"]",      expect: ["attr-contains-a1", "attr-contains-a3"],     level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute contains selector, matching lang attributes beginning with specified substring, ",                        selector: "#attr-contains [lang*=\"en-\"]",             expect: ["attr-contains-div2", "attr-contains-div6"], level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute contains selector, matching lang attributes ending with specified substring, ",                           selector: "#attr-contains [lang*=\"-CH\"]",             expect: ["attr-contains-div3", "attr-contains-div5"], level: 3, testType: TEST_QSA | TEST_MATCH},
+  {name: "Attribute contains selector, not matching class attribute with empty value",                                        selector: "#attr-contains [class*=\"\"]",               expect: [] /*no matches*/,                            level: 3, testType: TEST_QSA},
   {name: "Attribute contains selector with single-quoted value, matching class attribute beginning with specified substring", selector: "#attr-contains [class*=' apple']",           expect: ["attr-contains-p1"],                         level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute contains selector with single-quoted value, matching class attribute ending with specified substring",    selector: "#attr-contains [class*='orange ']",          expect: ["attr-contains-p1"],                         level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: "Attribute contains selector with single-quoted value, matching class attribute containing specified substring",     selector: "#attr-contains [class*='ple banana ora']",   expect: ["attr-contains-p1"],                         level: 3, testType: TEST_QSA | TEST_MATCH},
@@ -173,7 +179,7 @@ var validSelectors = [
   {name: ":nth-of-type selector, matching every second elemetn of their type, starting from the first", selector: "#pseudo-nth-p1 span:nth-of-type(2n-1)", expect: ["pseudo-nth-span1", "pseudo-nth-span3"],                                                           level: 3, testType: TEST_QSA | TEST_MATCH},
 
   // - :nth-last-of-type(n)  (Level 3)
-  {name: ":nth-last-of-type selector, matching the thrid last em element", selector: "#pseudo-nth-p1 em:nth-last-of-type(3)",      expect: ["pseudo-nth-em2"],                                                                                 level: 3, testType: TEST_QSA | TEST_MATCH},
+  {name: ":nth-last-of-type selector, matching the third last em element", selector: "#pseudo-nth-p1 em:nth-last-of-type(3)",      expect: ["pseudo-nth-em2"],                                                                                 level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: ":nth-last-of-type selector, matching every second last element of their type", selector: "#pseudo-nth-p1 :nth-last-of-type(2n)",       expect: ["pseudo-nth-span1", "pseudo-nth-em1", "pseudo-nth-strong1", "pseudo-nth-em3", "pseudo-nth-span3"], level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: ":nth-last-of-type selector, matching every second last element of their type, starting from the last", selector: "#pseudo-nth-p1 span:nth-last-of-type(2n-1)", expect: ["pseudo-nth-span2", "pseudo-nth-span4"],                                                           level: 3, testType: TEST_QSA | TEST_MATCH},
 
@@ -231,10 +237,12 @@ var validSelectors = [
   // - :enabled              (Level 3)
   {name: ":enabled pseudo-class selector, matching all enabled form controls",  selector: "#pseudo-ui :enabled",  expect: ["pseudo-ui-input1", "pseudo-ui-input2", "pseudo-ui-input3", "pseudo-ui-input4", "pseudo-ui-input5", "pseudo-ui-input6",
                                                                                                                            "pseudo-ui-input7", "pseudo-ui-input8", "pseudo-ui-input9", "pseudo-ui-textarea1", "pseudo-ui-button1"],    level: 3, testType: TEST_QSA | TEST_MATCH},
+  {name: ":enabled pseudo-class selector, not matching link elements",  selector: "#pseudo-link :enabled",  expect: [] /*no matches*/, unexpected: ["pseudo-link-a1","pseudo-link-a2","pseudo-link-a3","pseudo-link-map1","pseudo-link-area1","pseudo-link-area2"],   level: 3, testType: TEST_QSA | TEST_MATCH},
 
   // - :disabled             (Level 3)
-  {name: ":enabled pseudo-class selector, matching all disabled form controls", selector: "#pseudo-ui :disabled", expect: ["pseudo-ui-input10", "pseudo-ui-input11", "pseudo-ui-input12", "pseudo-ui-input13", "pseudo-ui-input14", "pseudo-ui-input15",
+  {name: ":disabled pseudo-class selector, matching all disabled form controls", selector: "#pseudo-ui :disabled", expect: ["pseudo-ui-input10", "pseudo-ui-input11", "pseudo-ui-input12", "pseudo-ui-input13", "pseudo-ui-input14", "pseudo-ui-input15",
                                                                                                                            "pseudo-ui-input16", "pseudo-ui-input17", "pseudo-ui-input18", "pseudo-ui-textarea2", "pseudo-ui-button2"], level: 3, testType: TEST_QSA | TEST_MATCH},
+  {name: ":disabled pseudo-class selector, not matching link elements", selector: "#pseudo-link :disabled", expect: [] /*no matches*/, unexpected: ["pseudo-link-a1","pseudo-link-a2","pseudo-link-a3","pseudo-link-map1","pseudo-link-area1","pseudo-link-area2"], level: 3, testType: TEST_QSA | TEST_MATCH},
 
   // - :checked              (Level 3)
   {name: ":checked pseudo-class selector, matching checked radio buttons and checkboxes", selector: "#pseudo-ui :checked", expect: ["pseudo-ui-input4", "pseudo-ui-input6", "pseudo-ui-input13", "pseudo-ui-input15"],  level: 3, testType: TEST_QSA | TEST_MATCH},
@@ -244,6 +252,7 @@ var validSelectors = [
   {name: ":not pseudo-class selector, matching ", selector: "#not * :not(:first-child)",   expect: ["not-em1", "not-em2", "not-em3"], level: 3, testType: TEST_QSA | TEST_MATCH},
   {name: ":not pseudo-class selector, matching nothing", selector: ":not(*)",   expect: [] /* no matches */, level: 3, testType: TEST_QSA},
   {name: ":not pseudo-class selector, matching nothing", selector: ":not(*|*)", expect: [] /* no matches */, level: 3, testType: TEST_QSA},
+  {name: ":not pseudo-class selector argument surrounded by spaces, matching ", selector: "#not>:not( div )",   expect: ["not-p1", "not-p2", "not-p3"], level: 3, testType: TEST_QSA | TEST_MATCH},
 
   // Pseudo-elements
   // - ::first-line
@@ -266,10 +275,9 @@ var validSelectors = [
   {name: "Class selector, matching element with specified class",                                           selector: ".class-p",                expect: ["class-p1","class-p2", "class-p3"],                                              level: 1, testType: TEST_QSA | TEST_MATCH},
   {name: "Class selector, chained, matching only elements with all specified classes",                      selector: "#class .apple.orange.banana",    expect: ["class-div1", "class-div2", "class-p4", "class-div3", "class-p6", "class-div4"], level: 1, testType: TEST_QSA | TEST_MATCH},
   {name: "Class Selector, chained, with type selector",                                                     selector: "div.apple.banana.orange", expect: ["class-div1", "class-div2", "class-div3", "class-div4"],                         level: 1, testType: TEST_QSA | TEST_MATCH},
-  // Caution: If copying and pasting the folowing non-ASCII classes, ensure unicode normalisation is not performed in the process.
-  {name: "Class selector, matching element with class value using non-ASCII characters",                    selector: ".台北Táiběi",             expect: ["class-span1"],               level: 1, testType: TEST_QSA | TEST_MATCH},
-  {name: "Class selector, matching multiple elements with class value using non-ASCII characters",          selector: ".台北",                     expect: ["class-span1","class-span2"], level: 1, testType: TEST_QSA | TEST_MATCH},
-  {name: "Class selector, chained, matching element with multiple class values using non-ASCII characters", selector: ".台北Táiběi.台北",          expect: ["class-span1"],               level: 1, testType: TEST_QSA | TEST_MATCH},
+  {name: "Class selector, matching element with class value using non-ASCII characters (1)",                selector: ".\u53F0\u5317Ta\u0301ibe\u030Ci",             expect: ["class-span1"],               level: 1, testType: TEST_QSA | TEST_MATCH},
+  {name: "Class selector, matching multiple elements with class value using non-ASCII characters",          selector: ".\u53F0\u5317",                     expect: ["class-span1","class-span2"], level: 1, testType: TEST_QSA | TEST_MATCH},
+  {name: "Class selector, chained, matching element with multiple class values using non-ASCII characters (1)", selector: ".\u53F0\u5317Ta\u0301ibe\u030Ci.\u53F0\u5317",          expect: ["class-span1"],               level: 1, testType: TEST_QSA | TEST_MATCH},
   {name: "Class selector, matching element with class with escaped character",                              selector: ".foo\\:bar",              expect: ["class-span3"],               level: 1, testType: TEST_QSA | TEST_MATCH},
   {name: "Class selector, matching element with class with escaped character",                              selector: ".test\\.foo\\[5\\]bar",   expect: ["class-span4"],               level: 1, testType: TEST_QSA | TEST_MATCH},
 
@@ -282,10 +290,9 @@ var validSelectors = [
   {name: "ID selector, not matching non-existent ancestor",           selector: "#none #id-div1",            expect: [] /*no matches*/,      level: 1, testType: TEST_QSA},
   {name: "ID selector, matching multiple elements with duplicate id", selector: "#id-li-duplicate",          expect: ["id-li-duplicate", "id-li-duplicate", "id-li-duplicate", "id-li-duplicate"], level: 1, testType: TEST_QSA | TEST_MATCH},
 
-  // Caution: If copying and pasting the folowing non-ASCII IDs, ensure unicode normalisation is not performed in the process.
-  {name: "ID selector, matching id value using non-ASCII characters",    selector: "#台北Táiběi",           expect: ["台北Táiběi"],       level: 1, testType: TEST_QSA | TEST_MATCH},
-  {name: "ID selector, matching id value using non-ASCII characters",    selector: "#台北",                   expect: ["台北"],               level: 1, testType: TEST_QSA | TEST_MATCH},
-  {name: "ID selector, matching id values using non-ASCII characters",   selector: "#台北Táiběi, #台北",      expect: ["台北Táiběi", "台北"], level: 1, testType: TEST_QSA | TEST_MATCH},
+  {name: "ID selector, matching id value using non-ASCII characters (1)",    selector: "#\u53F0\u5317Ta\u0301ibe\u030Ci",           expect: ["\u53F0\u5317Ta\u0301ibe\u030Ci"],       level: 1, testType: TEST_QSA | TEST_MATCH},
+  {name: "ID selector, matching id value using non-ASCII characters (2)",    selector: "#\u53F0\u5317",                   expect: ["\u53F0\u5317"],               level: 1, testType: TEST_QSA | TEST_MATCH},
+  {name: "ID selector, matching id values using non-ASCII characters (1)", selector: "#\u53F0\u5317Ta\u0301ibe\u030Ci, #\u53F0\u5317",      expect: ["\u53F0\u5317Ta\u0301ibe\u030Ci", "\u53F0\u5317"], level: 1, testType: TEST_QSA | TEST_MATCH},
 
   // XXX runMatchesTest() in level2-lib.js can't handle this because obtaining the expected nodes requires escaping characters when generating the selector from 'expect' values
   {name: "ID selector, matching element with id with escaped character", selector: "#\\#foo\\:bar",         expect: ["#foo:bar"],         level: 1, testType: TEST_QSA},
@@ -307,6 +314,21 @@ var validSelectors = [
   {name: "Descendant combinator, matching element with class that is a descendant of an element with class",   selector: ".descendant-div1 .descendant-div3", expect: ["descendant-div3"],                                    level: 1, testType: TEST_QSA | TEST_MATCH},
   {name: "Descendant combinator, not matching element with id that is not a descendant of an element with id", selector: "#descendant-div1 #descendant-div4", expect: [] /*no matches*/,                                      level: 1, testType: TEST_QSA},
   {name: "Descendant combinator, whitespace characters",                                                       selector: "#descendant\t\r\n#descendant-div2", expect: ["descendant-div2"],                                    level: 1, testType: TEST_QSA | TEST_MATCH},
+
+  /* The future of this combinator is uncertain, see
+   * https://github.com/w3c/csswg-drafts/issues/641
+   * These tests are commented out until a final decision is made on whether to
+   * keep the feature in the spec.
+   */
+
+  // // - Descendant combinator '>>'
+  // {name: "Descendant combinator '>>', matching element that is a descendant of an element with id",                 selector: "#descendant>>div",                   expect: ["descendant-div1", "descendant-div2", "descendant-div3", "descendant-div4"], level: 1, testType: TEST_QSA | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with id that is a descendant of an element",                 selector: "body>>#descendant-div1",             expect: ["descendant-div1"], exclude: ["detached", "fragment"], level: 1, testType: TEST_QSA | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with id that is a descendant of an element",                 selector: "div>>#descendant-div1",              expect: ["descendant-div1"],                                    level: 1, testType: TEST_QSA | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with id that is a descendant of an element with id",         selector: "#descendant>>#descendant-div2",      expect: ["descendant-div2"],                                    level: 1, testType: TEST_QSA | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with class that is a descendant of an element with id",      selector: "#descendant>>.descendant-div2",      expect: ["descendant-div2"],                                    level: 1, testType: TEST_QSA | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with class that is a descendant of an element with class",   selector: ".descendant-div1>>.descendant-div3", expect: ["descendant-div3"],                                    level: 1, testType: TEST_QSA | TEST_MATCH},
+  // {name: "Descendant combinator '>>', not matching element with id that is not a descendant of an element with id", selector: "#descendant-div1>>#descendant-div4", expect: [] /*no matches*/,                                      level: 1, testType: TEST_QSA},
 
   // - Child combinator '>'
   {name: "Child combinator, matching element that is a child of an element with id",                       selector: "#child>div",                          expect: ["child-div1", "child-div4"], level: 2, testType: TEST_QSA | TEST_MATCH},
@@ -353,6 +375,10 @@ var validSelectors = [
   {name: "Syntax, group of selectors separator, whitespace after",         selector: "#group em,\t\r\n#group strong",         expect: ["group-em1", "group-strong1"], level: 1, testType: TEST_QSA | TEST_MATCH},
   {name: "Syntax, group of selectors separator, whitespace before",        selector: "#group em\t\r\n,#group strong",         expect: ["group-em1", "group-strong1"], level: 1, testType: TEST_QSA | TEST_MATCH},
   {name: "Syntax, group of selectors separator, no whitespace",            selector: "#group em,#group strong",               expect: ["group-em1", "group-strong1"], level: 1, testType: TEST_QSA | TEST_MATCH},
+
+  // ::slotted (shouldn't match anything, but is a valid selector)
+  {name: "Slotted selector", selector: "::slotted(foo)", expect: [], level: 3, testType: TEST_QSA},
+  {name: "Slotted selector (no matching closing paren)", selector: "::slotted(foo", expect: [], level: 3, testType: TEST_QSA},
 ];
 
 
@@ -429,13 +455,6 @@ var validSelectors = [
 var scopedSelectors = [
   //{name: "", selector: "", ctx: "", ref: "", expect: [], level: 1, testType: TEST_FIND | TEST_MATCH},
 
-  // Universal Selector
-  {name: "Universal selector, matching all children of the specified reference element",       selector: ">*",   ctx: "#universal", expect: ["universal-p1", "universal-hr1", "universal-pre1", "universal-p2", "universal-address1"], unexpected: ["universal", "empty"], level: 2, testType: TEST_FIND | TEST_MATCH},
-  {name: "Universal selector, matching all grandchildren of the specified reference element",  selector: ">*>*", ctx: "#universal", expect: ["universal-code1", "universal-span1", "universal-a1", "universal-code2"],                 unexpected: ["universal", "empty"], level: 2, testType: TEST_FIND | TEST_MATCH},
-  {name: "Universal selector, matching all children of the specified empty reference element", selector: ">*",   ctx: "#empty",     expect: [] /*no matches*/,                                                                         unexpected: ["universal", "empty"], level: 2, testType: TEST_QSA},
-  {name: "Universal selector, matching all descendants of the specified reference element",    selector: "*",    ctx: "#universal", expect: ["universal-p1", "universal-code1", "universal-hr1", "universal-pre1", "universal-span1",
-                                                                                                                                             "universal-p2", "universal-a1", "universal-address1", "universal-code2", "universal-a2"], unexpected: ["universal", "empty"], level: 2, testType: TEST_FIND | TEST_MATCH},
-
   // Attribute Selectors
   // - presence                  [att]
   {name: "Attribute presence selector, matching align attribute with value",                    selector: ".attr-presence-div1[align]",                             ctx: "#attr-presence", expect: ["attr-presence-div1"],                                             level: 2, testType: TEST_FIND | TEST_MATCH},
@@ -482,6 +501,7 @@ var scopedSelectors = [
   // - substring begins-with     [att^=val] (Level 3)
   {name: "Attribute begins with selector, matching href attributes beginning with specified substring",                             selector: "a[href^=\"http://www\"]", ctx: "#attr-begins", expect: ["attr-begins-a1", "attr-begins-a3"],     level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute begins with selector, matching lang attributes beginning with specified substring, ",                           selector: "[lang^=\"en-\"]",         ctx: "#attr-begins", expect: ["attr-begins-div2", "attr-begins-div4"], level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: "Attribute begins with selector, not matching class attribute with empty value",                                           selector: "[class^=\"\"]",          ctx: "#attr-begins", expect: [] /*no matches*/,                        level: 3, testType: TEST_FIND},
   {name: "Attribute begins with selector, not matching class attribute not beginning with specified substring",                     selector: "[class^=apple]",          ctx: "#attr-begins", expect: [] /*no matches*/,                        level: 3, testType: TEST_FIND},
   {name: "Attribute begins with selector with single-quoted value, matching class attribute beginning with specified substring",    selector: "[class^=' apple']",       ctx: "#attr-begins", expect: ["attr-begins-p1"],                       level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute begins with selector with double-quoted value, matching class attribute beginning with specified substring",    selector: "[class^=\" apple\"]",     ctx: "#attr-begins", expect: ["attr-begins-p1"],                       level: 3, testType: TEST_FIND | TEST_MATCH},
@@ -490,6 +510,7 @@ var scopedSelectors = [
   // - substring ends-with       [att$=val] (Level 3)
   {name: "Attribute ends with selector, matching href attributes ending with specified substring",                             selector: "a[href$=\".org\"]",   ctx: "#attr-ends", expect: ["attr-ends-a1", "attr-ends-a3"],     level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute ends with selector, matching lang attributes ending with specified substring, ",                           selector: "[lang$=\"-CH\"]",     ctx: "#attr-ends", expect: ["attr-ends-div2", "attr-ends-div4"], level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: "Attribute ends with selector, not matching class attribute with empty value",                                        selector: "[class$=\"\"]",       ctx: "#attr-ends", expect: [] /*no matches*/,                    level: 3, testType: TEST_FIND},
   {name: "Attribute ends with selector, not matching class attribute not ending with specified substring",                     selector: "[class$=apple]",      ctx: "#attr-ends", expect: [] /*no matches*/,                    level: 3, testType: TEST_FIND},
   {name: "Attribute ends with selector with single-quoted value, matching class attribute ending with specified substring",    selector: "[class$='apple ']",   ctx: "#attr-ends", expect: ["attr-ends-p1"],                     level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute ends with selector with double-quoted value, matching class attribute ending with specified substring",    selector: "[class$=\"apple \"]", ctx: "#attr-ends", expect: ["attr-ends-p1"],                     level: 3, testType: TEST_FIND | TEST_MATCH},
@@ -501,6 +522,7 @@ var scopedSelectors = [
   {name: "Attribute contains selector, matching href attributes containing specified substring",                              selector: "a[href*=\".example.\"]",      ctx: "#attr-contains", expect: ["attr-contains-a1", "attr-contains-a3"],     level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute contains selector, matching lang attributes beginning with specified substring, ",                        selector: "[lang*=\"en-\"]",             ctx: "#attr-contains", expect: ["attr-contains-div2", "attr-contains-div6"], level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute contains selector, matching lang attributes ending with specified substring, ",                           selector: "[lang*=\"-CH\"]",             ctx: "#attr-contains", expect: ["attr-contains-div3", "attr-contains-div5"], level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: "Attribute contains selector, not matching class attribute with empty value",                                        selector: "[class*=\"\"]",               ctx: "#attr-contains", expect: [] /*no matches*/,                            level: 3, testType: TEST_FIND},
   {name: "Attribute contains selector with single-quoted value, matching class attribute beginning with specified substring", selector: "[class*=' apple']",           ctx: "#attr-contains", expect: ["attr-contains-p1"],                         level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute contains selector with single-quoted value, matching class attribute ending with specified substring",    selector: "[class*='orange ']",          ctx: "#attr-contains", expect: ["attr-contains-p1"],                         level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: "Attribute contains selector with single-quoted value, matching class attribute containing specified substring",     selector: "[class*='ple banana ora']",   ctx: "#attr-contains", expect: ["attr-contains-p1"],                         level: 3, testType: TEST_FIND | TEST_MATCH},
@@ -518,10 +540,13 @@ var scopedSelectors = [
   {name: ":root pseudo-class selector, not matching document root element",  selector: ":root", ctx: "#html", expect: [] /*no matches*/, exclude: ["fragment", "detached"],            level: 3, testType: TEST_FIND},
 
   // - :nth-child(n)         (Level 3)
-  {name: ":nth-child selector, matching the third child element",                              selector: ":nth-child(3)",      ctx: "#pseudo-nth-table1", expect: ["pseudo-nth-td3", "pseudo-nth-td9", "pseudo-nth-tr3", "pseudo-nth-td15"],             level: 3, testType: TEST_FIND | TEST_MATCH},
-  {name: ":nth-child selector, matching every third child element",                            selector: "li:nth-child(3n)",   ctx: "#pseudo-nth", expect: ["pseudo-nth-li3", "pseudo-nth-li6", "pseudo-nth-li9", "pseudo-nth-li12"],                    level: 3, testType: TEST_FIND | TEST_MATCH},
-  {name: ":nth-child selector, matching every second child element, starting from the fourth", selector: "li:nth-child(2n+4)", ctx: "#pseudo-nth", expect: ["pseudo-nth-li4", "pseudo-nth-li6", "pseudo-nth-li8", "pseudo-nth-li10", "pseudo-nth-li12"], level: 3, testType: TEST_FIND | TEST_MATCH},
-  {name: ":nth-child selector, matching every fourth child element, starting from the third",  selector: ":nth-child(4n-1)",   ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-em2", "pseudo-nth-span3"],                                                    level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-child selector, matching the third child element",                                               selector: ":nth-child(3)",                    ctx: "#pseudo-nth-table1", expect: ["pseudo-nth-td3", "pseudo-nth-td9", "pseudo-nth-tr3", "pseudo-nth-td15"],             level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-child selector, matching every third child element",                                             selector: "li:nth-child(3n)",                 ctx: "#pseudo-nth", expect: ["pseudo-nth-li3", "pseudo-nth-li6", "pseudo-nth-li9", "pseudo-nth-li12"],                    level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-child selector, matching every second child element, starting from the fourth",                  selector: "li:nth-child(2n+4)",               ctx: "#pseudo-nth", expect: ["pseudo-nth-li4", "pseudo-nth-li6", "pseudo-nth-li8", "pseudo-nth-li10", "pseudo-nth-li12"], level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-child selector, matching every second child element, starting from the fourth, with whitespace", selector: "li:nth-child(2n \t\r\n+ \t\r\n4)", ctx: "#pseudo-nth", expect: ["pseudo-nth-li4", "pseudo-nth-li6", "pseudo-nth-li8", "pseudo-nth-li10", "pseudo-nth-li12"], level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-child selector, matching every fourth child element, starting from the third",                   selector: ":nth-child(4n-1)",                 ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-em2", "pseudo-nth-span3"],                                                    level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-child selector, matching every fourth child element, starting from the third, with whitespace",  selector: ":nth-child(4n \t\r\n- \t\r\n1)",   ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-em2", "pseudo-nth-span3"],                                                    level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-child selector used twice, matching ",                                                           selector: ":nth-child(1) :nth-child(1)",      ctx: "#pseudo-nth", expect: ["pseudo-nth-table1", "pseudo-nth-tr1"],                                                      level: 3, testType: TEST_FIND | TEST_MATCH},
 
   // - :nth-last-child       (Level 3)
   {name: ":nth-last-child selector, matching the third last child element",                                           selector: ":nth-last-child(3)",      ctx: "#pseudo-nth-table1", expect: ["pseudo-nth-tr1", "pseudo-nth-td4", "pseudo-nth-td10", "pseudo-nth-td16"],         level: 3, testType: TEST_FIND | TEST_MATCH},
@@ -535,7 +560,7 @@ var scopedSelectors = [
   {name: ":nth-of-type selector, matching every second elemetn of their type, starting from the first", selector: "span:nth-of-type(2n-1)", ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-span1", "pseudo-nth-span3"],                                                           level: 3, testType: TEST_FIND | TEST_MATCH},
 
   // - :nth-last-of-type(n)  (Level 3)
-  {name: ":nth-last-of-type selector, matching the thrid last em element",                                       selector: "em:nth-last-of-type(3)",      ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-em2"],                                                                                 level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":nth-last-of-type selector, matching the third last em element",                                       selector: "em:nth-last-of-type(3)",      ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-em2"],                                                                                 level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: ":nth-last-of-type selector, matching every second last element of their type",                         selector: ":nth-last-of-type(2n)",       ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-span1", "pseudo-nth-em1", "pseudo-nth-strong1", "pseudo-nth-em3", "pseudo-nth-span3"], level: 3, testType: TEST_FIND | TEST_MATCH},
   {name: ":nth-last-of-type selector, matching every second last element of their type, starting from the last", selector: "span:nth-last-of-type(2n-1)", ctx: "#pseudo-nth-p1", expect: ["pseudo-nth-span2", "pseudo-nth-span4"],                                                           level: 3, testType: TEST_FIND | TEST_MATCH},
 
@@ -596,10 +621,12 @@ var scopedSelectors = [
   // - :enabled              (Level 3)
   {name: ":enabled pseudo-class selector, matching all enabled form controls (1)",  selector: "#pseudo-ui :enabled",  ctx: "", expect: ["pseudo-ui-input1", "pseudo-ui-input2", "pseudo-ui-input3", "pseudo-ui-input4", "pseudo-ui-input5", "pseudo-ui-input6",
                                                                                                                            "pseudo-ui-input7", "pseudo-ui-input8", "pseudo-ui-input9", "pseudo-ui-textarea1", "pseudo-ui-button1"],    level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":enabled pseudo-class selector, not matching link elements (1)",  selector: "#pseudo-link :enabled",  ctx: "", expect: [] /*no matches*/, unexpected: ["pseudo-link-a1","pseudo-link-a2","pseudo-link-a3","pseudo-link-map1","pseudo-link-area1","pseudo-link-area2"],   level: 3, testType: TEST_QSA | TEST_MATCH},
 
   // - :disabled             (Level 3)
-  {name: ":enabled pseudo-class selector, matching all disabled form controls (1)", selector: "#pseudo-ui :disabled", ctx: "", expect: ["pseudo-ui-input10", "pseudo-ui-input11", "pseudo-ui-input12", "pseudo-ui-input13", "pseudo-ui-input14", "pseudo-ui-input15",
+  {name: ":disabled pseudo-class selector, matching all disabled form controls (1)", selector: "#pseudo-ui :disabled", ctx: "", expect: ["pseudo-ui-input10", "pseudo-ui-input11", "pseudo-ui-input12", "pseudo-ui-input13", "pseudo-ui-input14", "pseudo-ui-input15",
                                                                                                                            "pseudo-ui-input16", "pseudo-ui-input17", "pseudo-ui-input18", "pseudo-ui-textarea2", "pseudo-ui-button2"], level: 3, testType: TEST_FIND | TEST_MATCH},
+  {name: ":disabled pseudo-class selector, not matching link elements (1)", selector: "#pseudo-link :disabled", ctx: "", expect: [] /*no matches*/, unexpected: ["pseudo-link-a1","pseudo-link-a2","pseudo-link-a3","pseudo-link-map1","pseudo-link-area1","pseudo-link-area2"], level: 3, testType: TEST_QSA | TEST_MATCH},
 
   // - :checked              (Level 3)
   {name: ":checked pseudo-class selector, matching checked radio buttons and checkboxes (1)", selector: "#pseudo-ui :checked", ctx: "", expect: ["pseudo-ui-input4", "pseudo-ui-input6", "pseudo-ui-input13", "pseudo-ui-input15"],  level: 3, testType: TEST_FIND | TEST_MATCH},
@@ -631,10 +658,9 @@ var scopedSelectors = [
   {name: "Class selector, matching element with specified class (1)",                                           selector: ".class-p",                ctx: "", expect: ["class-p1","class-p2", "class-p3"],                                              level: 1, testType: TEST_FIND | TEST_MATCH},
   {name: "Class selector, chained, matching only elements with all specified classes (1)",                      selector: "#class .apple.orange.banana",    ctx: "", expect: ["class-div1", "class-div2", "class-p4", "class-div3", "class-p6", "class-div4"], level: 1, testType: TEST_FIND | TEST_MATCH},
   {name: "Class Selector, chained, with type selector (1)",                                                     selector: "div.apple.banana.orange", ctx: "", expect: ["class-div1", "class-div2", "class-div3", "class-div4"],                         level: 1, testType: TEST_FIND | TEST_MATCH},
-  // Caution: If copying and pasting the folowing non-ASCII classes, ensure unicode normalisation is not performed in the process.
-  {name: "Class selector, matching element with class value using non-ASCII characters",                    selector: ".台北Táiběi",             ctx: "", expect: ["class-span1"],               level: 1, testType: TEST_FIND | TEST_MATCH},
-  {name: "Class selector, matching multiple elements with class value using non-ASCII characters (1)",          selector: ".台北",                     ctx: "", expect: ["class-span1","class-span2"], level: 1, testType: TEST_FIND | TEST_MATCH},
-  {name: "Class selector, chained, matching element with multiple class values using non-ASCII characters", selector: ".台北Táiběi.台北",          ctx: "", expect: ["class-span1"],               level: 1, testType: TEST_FIND | TEST_MATCH},
+  {name: "Class selector, matching element with class value using non-ASCII characters (2)",                    selector: ".\u53F0\u5317Ta\u0301ibe\u030Ci",             ctx: "", expect: ["class-span1"],               level: 1, testType: TEST_FIND | TEST_MATCH},
+  {name: "Class selector, matching multiple elements with class value using non-ASCII characters (1)",          selector: ".\u53F0\u5317",                     ctx: "", expect: ["class-span1","class-span2"], level: 1, testType: TEST_FIND | TEST_MATCH},
+  {name: "Class selector, chained, matching element with multiple class values using non-ASCII characters (2)", selector: ".\u53F0\u5317Ta\u0301ibe\u030Ci.\u53F0\u5317",          ctx: "", expect: ["class-span1"],               level: 1, testType: TEST_FIND | TEST_MATCH},
   {name: "Class selector, matching element with class with escaped character (1)",                              selector: ".foo\\:bar",              ctx: "", expect: ["class-span3"],               level: 1, testType: TEST_FIND | TEST_MATCH},
   {name: "Class selector, matching element with class with escaped character (1)",                              selector: ".test\\.foo\\[5\\]bar",   ctx: "", expect: ["class-span4"],               level: 1, testType: TEST_FIND | TEST_MATCH},
 
@@ -647,10 +673,9 @@ var scopedSelectors = [
   {name: "ID selector, not matching non-existent ancestor",           selector: "#none #id-div1",            ctx: "", expect: [] /*no matches*/,      level: 1, testType: TEST_FIND},
   {name: "ID selector, matching multiple elements with duplicate id (1)", selector: "#id-li-duplicate",          ctx: "", expect: ["id-li-duplicate", "id-li-duplicate", "id-li-duplicate", "id-li-duplicate"], level: 1, testType: TEST_FIND | TEST_MATCH},
 
-  // Caution: If copying and pasting the folowing non-ASCII IDs, ensure unicode normalisation is not performed in the process.
-  {name: "ID selector, matching id value using non-ASCII characters",    selector: "#台北Táiběi",           ctx: "", expect: ["台北Táiběi"],       level: 1, testType: TEST_FIND | TEST_MATCH},
-  {name: "ID selector, matching id value using non-ASCII characters (1)",    selector: "#台北",                   ctx: "", expect: ["台北"],               level: 1, testType: TEST_FIND | TEST_MATCH},
-  {name: "ID selector, matching id values using non-ASCII characters",   selector: "#台北Táiběi, #台北",      ctx: "", expect: ["台北Táiběi", "台北"], level: 1, testType: TEST_FIND | TEST_MATCH},
+  {name: "ID selector, matching id value using non-ASCII characters (3)",    selector: "#\u53F0\u5317Ta\u0301ibe\u030Ci",           ctx: "", expect: ["\u53F0\u5317Ta\u0301ibe\u030Ci"],       level: 1, testType: TEST_FIND | TEST_MATCH},
+  {name: "ID selector, matching id value using non-ASCII characters (4)",    selector: "#\u53F0\u5317",                   ctx: "", expect: ["\u53F0\u5317"],               level: 1, testType: TEST_FIND | TEST_MATCH},
+  {name: "ID selector, matching id values using non-ASCII characters (2)",   selector: "#\u53F0\u5317Ta\u0301ibe\u030Ci, #\u53F0\u5317",      ctx: "", expect: ["\u53F0\u5317Ta\u0301ibe\u030Ci", "\u53F0\u5317"], level: 1, testType: TEST_FIND | TEST_MATCH},
 
   // XXX runMatchesTest() in level2-lib.js can't handle this because obtaining the expected nodes requires escaping characters when generating the selector from 'expect' values
   {name: "ID selector, matching element with id with escaped character", selector: "#\\#foo\\:bar",         ctx: "", expect: ["#foo:bar"],         level: 1, testType: TEST_FIND},
@@ -672,6 +697,15 @@ var scopedSelectors = [
   {name: "Descendant combinator, matching element with class that is a descendant of an element with class (1)",   selector: ".descendant-div1 .descendant-div3", ctx: "", expect: ["descendant-div3"],                                    level: 1, testType: TEST_FIND | TEST_MATCH},
   {name: "Descendant combinator, not matching element with id that is not a descendant of an element with id", selector: "#descendant-div1 #descendant-div4", ctx: "", expect: [] /*no matches*/,                                      level: 1, testType: TEST_FIND},
   {name: "Descendant combinator, whitespace characters (1)",                                                       selector: "#descendant\t\r\n#descendant-div2", ctx: "", expect: ["descendant-div2"],                                    level: 1, testType: TEST_FIND | TEST_MATCH},
+
+  // // - Descendant combinator '>>'
+  // {name: "Descendant combinator '>>', matching element that is a descendant of an element with id (1)",                 selector: "#descendant>>div",                   ctx: "", expect: ["descendant-div1", "descendant-div2", "descendant-div3", "descendant-div4"], level: 1, testType: TEST_FIND | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with id that is a descendant of an element (1)",                 selector: "body>>#descendant-div1",             ctx: "", expect: ["descendant-div1"], exclude: ["detached", "fragment"], level: 1, testType: TEST_FIND | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with id that is a descendant of an element (1)",                 selector: "div>>#descendant-div1",              ctx: "", expect: ["descendant-div1"],                                    level: 1, testType: TEST_FIND | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with id that is a descendant of an element with id (1)",         selector: "#descendant>>#descendant-div2",      ctx: "", expect: ["descendant-div2"],                                    level: 1, testType: TEST_FIND | TEST_MATCH},
+  // {name: "Descendant combinator '>>', matching element with class that is a descendant of an element with id (1)",      selector: "#descendant>>.descendant-div2",      ctx: "", expect: ["descendant-div2"],                                    level: 1, testType: TEST_FIND | TEST_MATCH},
+  // {name: "Descendant combinator, '>>', matching element with class that is a descendant of an element with class (1)",   selector: ".descendant-div1>>.descendant-div3", ctx: "", expect: ["descendant-div3"],                                    level: 1, testType: TEST_FIND | TEST_MATCH},
+  // {name: "Descendant combinator '>>', not matching element with id that is not a descendant of an element with id", selector: "#descendant-div1>>#descendant-div4", ctx: "", expect: [] /*no matches*/,                                      level: 1, testType: TEST_FIND},
 
   // - Child combinator '>'
   {name: "Child combinator, matching element that is a child of an element with id (1)",                       selector: "#child>div",                          ctx: "", expect: ["child-div1", "child-div4"], level: 2, testType: TEST_FIND | TEST_MATCH},

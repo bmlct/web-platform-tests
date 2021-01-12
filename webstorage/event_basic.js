@@ -4,15 +4,11 @@ testStorages(function(storageString) {
         var storage = window[storageString];
         t.add_cleanup(function() { storage.clear() });
 
-        storageEventList = new Array();
-        storage.clear();
+        clearStorage(storageString, t.step_func(step1));
         assert_equals(storage.length, 0, "storage.length");
-
-        runAfterNStorageEvents(t.step_func(step1), 0);
 
         function step1(msg)
         {
-            storageEventList = new Array();
             storage.setItem('FOO', 'BAR');
 
             runAfterNStorageEvents(t.step_func(step2), 1);
@@ -24,6 +20,8 @@ testStorages(function(storageString) {
                 assert_unreached(msg);
             }
             assert_equals(storageEventList.length, 1);
+            assert_equals(storageEventList[0].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[0].key, "FOO");
             assert_equals(storageEventList[0].oldValue, null);
             assert_equals(storageEventList[0].newValue, "BAR");
@@ -42,18 +40,26 @@ testStorages(function(storageString) {
                 assert_unreached(msg);
             }
             assert_equals(storageEventList.length, 5);
+            assert_equals(storageEventList[1].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[1].key, "FU");
             assert_equals(storageEventList[1].oldValue, null);
             assert_equals(storageEventList[1].newValue, "BAR");
 
+            assert_equals(storageEventList[2].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[2].key, "a");
             assert_equals(storageEventList[2].oldValue, null);
             assert_equals(storageEventList[2].newValue, "1");
 
+            assert_equals(storageEventList[3].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[3].key, "b");
             assert_equals(storageEventList[3].oldValue, null);
             assert_equals(storageEventList[3].newValue, "2");
 
+            assert_equals(storageEventList[4].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[4].key, "b");
             assert_equals(storageEventList[4].oldValue, "2");
             assert_equals(storageEventList[4].newValue, "3");
@@ -69,6 +75,8 @@ testStorages(function(storageString) {
                 assert_unreached(msg);
             }
             assert_equals(storageEventList.length, 6);
+            assert_equals(storageEventList[5].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[5].key, "FOO");
             assert_equals(storageEventList[5].oldValue, "BAR");
             assert_equals(storageEventList[5].newValue, null);
@@ -84,6 +92,8 @@ testStorages(function(storageString) {
                 assert_unreached(msg);
             }
             assert_equals(storageEventList.length, 7);
+            assert_equals(storageEventList[6].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[6].key, "FU");
             assert_equals(storageEventList[6].oldValue, "BAR");
             assert_equals(storageEventList[6].newValue, null);
@@ -99,6 +109,8 @@ testStorages(function(storageString) {
                 assert_unreached(msg);
             }
             assert_equals(storageEventList.length, 8);
+            assert_equals(storageEventList[7].storageAreaString, storageString,
+                "Storage event came from wrong storage type.");
             assert_equals(storageEventList[7].key, null);
             assert_equals(storageEventList[7].oldValue, null);
             assert_equals(storageEventList[7].newValue, null);

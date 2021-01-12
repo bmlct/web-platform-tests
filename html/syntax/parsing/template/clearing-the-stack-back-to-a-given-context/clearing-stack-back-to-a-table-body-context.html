@@ -8,7 +8,6 @@
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <script src="/html/resources/common.js"></script>
-<link rel="stylesheet" href="/resources/testharness.css">
 </head>
 <body>
 <div id="log"></div>
@@ -176,7 +175,8 @@ var parameters = [
      doc, 'tbody', '</tfoot>', null, null]
 ];
 
-generate_tests(doTest, parameters, 'Clearing stack back to a table body context.');
+// Clearing stack back to a table body context.
+generate_tests(doTest, parameters);
 
 </script>
 </body>
