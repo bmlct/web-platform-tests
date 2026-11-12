@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 <!--
-Test adapted from https://mxr.mozilla.org/chromium/source/src/third_party/WebKit/LayoutTests/fast/dom/TreeWalker/resources/TreeWalker-currentNode.js
+Test adapted from chromium/source/src/third_party/WebKit/LayoutTests/fast/dom/TreeWalker/resources/TreeWalker-currentNode.js
 -->
 <head>
 <title>TreeWalker: currentNode</title>
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
-<script src="traversal-support.js"></script>
-<link rel="stylesheet" href="/resources/testharness.css">
+<script src="support/assert-node.js"></script>
 <div id=log></div>
 </head>
 <body>
@@ -31,6 +30,14 @@ test(function()
     assert_equals(w.parentNode(), null);
     assert_node(w.currentNode, { type: Element, id: 'subTree' });
 }, "Test that TreeWalker.parent() doesn't set the currentNode to a node not under the root.");
+
+test(function()
+{
+    var w = document.createTreeWalker(subTree, NodeFilter.SHOW_ELEMENT, all);
+    assert_throws_js(TypeError, function() { w.currentNode = null; });
+    assert_throws_js(TypeError, function() { w.currentNode = {}; });
+    assert_throws_js(TypeError, function() { w.currentNode = window; });
+}, "Test that setting currentNode to non-Node values throws.");
 
 test(function()
 {

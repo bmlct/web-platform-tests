@@ -1,39 +1,27 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>FileAPI Test: filereader_readAsDataURL</title>
-    <link rel="author" title="Intel" href="http://www.intel.com">
-    <link rel="help" href="http://dev.w3.org/2006/webapi/FileAPI/#readAsDataURL">
-    <script src="/resources/testharness.js"></script>
-    <script src="/resources/testharnessreport.js"></script>
-  </head>
-  <body>
-    <div id="log"></div>
+<meta charset="utf-8">
+<title>FileAPI Test: FileReader.readAsDataURL</title>
+<link rel="help" href="https://w3c.github.io/FileAPI/#readAsDataURL">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
 
-    <script>
-    async_test(function() {
-      var blob = new Blob(["TEST"]);
-      var reader = new FileReader();
+<script>
+"use strict";
 
-      reader.onload = this.step_func(function(evt) {
-        assert_equals(typeof reader.result, "string", "The result is string");
-        assert_equals(reader.result.indexOf("data:"), 0, "The result attribute starts with 'data'");
-        assert_true(reader.result.indexOf("base64") > 0, "The result attribute contains 'base64'");
-        assert_equals(reader.readyState, reader.DONE);
-        this.done();
-      });
+async_test(t => {
+  const blob = new Blob(["Hello"], {
+    type: "text/plain;charset=utf-8"
+  });
 
-      reader.onloadstart = this.step_func(function(evt) {
-        assert_equals(reader.readyState, reader.LOADING);
-      });
+  const fileReader = new FileReader();
+  fileReader.addEventListener("load", () => {
+    assert_equals(
+      fileReader.result,
+      "data:text/plain;charset=utf-8;base64,SGVsbG8="
+    );
+    t.done();
+  });
 
-      reader.onprogress = this.step_func(function(evt) {
-        assert_equals(reader.readyState, reader.LOADING);
-      });
-
-      reader.readAsDataURL(blob);
-    });
-    </script>
-  </body>
-</html>
+  fileReader.readAsDataURL(blob);
+}, "readAsDataURL result for Blob with specified MIME type including charset");
+</script>

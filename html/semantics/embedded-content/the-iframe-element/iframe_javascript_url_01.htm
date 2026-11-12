@@ -1,6 +1,4 @@
 <!DOCTYPE html><html><head><title>javascript: URL creating a document in an about:blank iframe</title>
-<link rel="help" href="https://html.spec.whatwg.org/multipage/embedded-content.html#the-iframe-element">
-<link rel="help" href="https://html.spec.whatwg.org/multipage/embedded-content.html#process-the-iframe-attributes">
 <link rel="help" href="https://html.spec.whatwg.org/multipage/#the-iframe-element">
 <link rel="help" href="https://html.spec.whatwg.org/multipage/#process-the-iframe-attributes">
 <script src="/resources/testharness.js"></script>
@@ -20,7 +18,8 @@ var expected = {
     ifr1:{url:"about:blank", sameDom: true},
     ifr2:{url:"about:blank", sameDom: true},
     ifr3:{url: location.href.replace(/\/[^\/]*$/, '/'), sameDom: true },
-    ifr4:{url:"about:blank", sameDom: true}
+    ifr4:{url:"about:blank", sameDom: true},
+    ifr5:{url:"about:blank", sameDom: true}
 }
 
 var js_url = 'javascript:"<html><script>var sameDom = false; try{var cn = top.document.body.className;sameDom = true;}catch(e){}; parent.postMessage( {url: document.URL, name: name, sameDom: sameDom}, \'*\')<\/script><body><p>JS-generated document</p></body></<html>";'
@@ -48,6 +47,13 @@ window.onload = function () {
             results[frame.name] = 'Exception on setting!';
         }
     };
+
+    // An iframe with an initial src of a javascript: URL should also have a
+    // document URL of about:blank.
+    var ifr = document.createElement('iframe');
+    ifr.name = 'ifr5';
+    ifr.src = js_url;
+    document.body.appendChild(ifr);
 }
 
 </script>
